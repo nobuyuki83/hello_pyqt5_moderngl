@@ -21,52 +21,51 @@ class QGLControllerWidget(QtOpenGL.QGLWidget):
                 #version 330
                 uniform mat4 Mvp;
                 in vec3 in_position;
-                in vec3 in_normal;
+                in vec3 in_color;
                 out vec3 v_vert;
-                out vec3 v_norm;
+                out vec3 v_color;
                 void main() {
                     v_vert = in_position;
-                    v_norm = in_normal;
+                    v_color = in_color;
                     gl_Position = Mvp * vec4(in_position, 1.0);
                 }
             ''',
             fragment_shader='''
                 #version 330
-                uniform vec4 Color;
                 in vec3 v_vert;
-                in vec3 v_norm;
+                in vec3 v_color;
                 out vec4 f_color;
                 void main() {
-                    vec3 color = Color.rgb * Color.a;
-                    f_color = vec4(color * v_norm.z, 1.0);
+                    f_color = vec4(v_color, 1.0);
                 }
             '''
         )
 
-        self.color = self.prog['Color']
         self.mvp = self.prog['Mvp']
-        self.mesh = None
-        self.center = np.zeros(3)
-        self.scale = 1.0
 
         index_buffer = self.ctx.buffer(
             np.array([0,1,2], dtype="u4").tobytes())
         vao_content = [
             (self.ctx.buffer(
-                np.array([-1,-1,0, +1,-1,0, +1,+1,0], dtype="f4").tobytes()),
+                np.array([
+                    -0.5,-0.5,0, 
+                    +0.5,-0.5,0, 
+                    +0,+0.5,0], dtype="f4").tobytes()),
                 '3f', 'in_position'),
             (self.ctx.buffer(
-                np.array([0,0,+1, 0,0,+1, 0,0,+1], dtype="f4").tobytes()),
-                '3f', 'in_normal')
+                np.array([
+                    1,0,0, 
+                    0,1,0, 
+                    0,0,1], dtype="f4").tobytes()),
+                '3f', 'in_color')
         ]
         self.vao = self.ctx.vertex_array(
                 self.prog, vao_content, index_buffer, 4,
             )
 
     def paintGL(self):
-        self.ctx.clear(1.0, 0.0, 1.0)
+        self.ctx.clear(1.0, 0.8, 1.0)
         self.ctx.enable(moderngl.DEPTH_TEST)
-        self.color.value = (0.0, 0.0, 1.0, 1.0)
         self.mvp.value = (
             1., 0., 0., 0., 
             0., 1., 0., 0.,
